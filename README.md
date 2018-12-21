@@ -3,7 +3,7 @@ Just a PID library
 
 Written for RobotC for VEX Robotics
 
-Can be adapted
+Can be adapted for other uses
 
 References:
 "Introduction to PID Controllers" by George Gillard
