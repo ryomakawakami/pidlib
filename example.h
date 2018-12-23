@@ -29,7 +29,7 @@
 // PID objects with somewhat reasonable constants
 // Only P is used
 // Not sure if constructors work in this scope
-PID basePID(0.5, 0, 0), driftPID(1, 0, 0);
+PID basePID(0.5, 0, 0, 0), driftPID(1, 0, 0, 0);
 
 // Sets left base motors
 void driveL(int power) {

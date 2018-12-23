@@ -8,30 +8,31 @@ long getTime() {
 
 // PID class
 // lastTime stores time of previous calculation
-// kP, kI, kD are constants for PID
+// kP, kI, kD, kF are constants for PID
 // lastError stores the last value of the error
 // sigma stores the total error
 class PID {
     public:
-        PID PID(float p, float i, float d);
-        void setConstants(float p, float i, float d);
+        PID PID(float p, float i, float d, float f);
+        void setConstants(float p, float i, float d, float f);
         float calculate(float target, float sensorValue, float range = 10000);
     private:
         long lastTime;
-        float kP, kI, kD;
+        float kP, kI, kD, kF;
         float lastError;
         float sigma;
 };
 
 // PID object constructor
 // lastTime set to current time
-// kP, kI, kD set to inputted values
+// kP, kI, kD, kF set to inputted values
 // lastError, sigma set to 0
-PID::PID(float p, float i, float d) {
+PID::PID(float p, float i, float d, float f) {
     lastTime = getTime();
     kP = p;
     kI = i;
     kD = d;
+    kF = f;
     lastError = 0;
     sigma = 0;
 }
@@ -39,13 +40,14 @@ PID::PID(float p, float i, float d) {
 // PID function setConstants
 // Allows user to input kP, kI, kD and initializes other variables
 // lastTime set to current time
-// kP, kI, kD set to inputted values
+// kP, kI, kD, kF set to inputted values
 // lastError, sigma set to 0
-void PID::setConstants(float p, float i, float d) {
+void PID::setConstants(float p, float i, float d, float f) {
     lastTime = getTime();
     kP = p;
     kI = i;
     kD = d;
+    kF = f;
     lastError = 0;
     sigma = 0;
 }
@@ -90,7 +92,7 @@ float PID::calculate(float target, float sensorValue, float range = 10000) {
     lastError = error;
 
     // Calculate output
-    output = kP * error + kI * sigma + kD * derivative;
+    output = kP * error + kI * sigma + kD * derivative + kF * target;
 
     return output;
 }
