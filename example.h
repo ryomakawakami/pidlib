@@ -33,60 +33,60 @@ PID basePID(0.5, 0, 0, 0), driftPID(1, 0, 0, 0);
 
 // Sets left base motors
 void driveL(int power) {
-    motor[left] = power;
+	motor[left] = power;
 }
 
 // Sets right base motors
 void driveR(int power) {
-    motor[right] = power;
+	motor[right] = power;
 }
 
 // Returns left encoder value
 int getLeftEncoder() {
-    return SensorValue[leftEncoder];
+	return SensorValue[leftEncoder];
 }
 
 // Returns right encoder value
 int getRightEncoder() {
-    return SensorValue[rightEncoder];
+	return SensorValue[rightEncoder];
 }
 
 // Clears encoders
 void clearEncoders() {
-    SensorValue[leftEncoder] = 0;
-    SensorValue[rightEncoder] = 0;
+	SensorValue[leftEncoder] = 0;
+	SensorValue[rightEncoder] = 0;
 }
 
 // Using only left encoder
 void autoDrive(int target) {
 
-    bool close = false, done = false;
-    long closeTime;
-    float driveOut;
+	bool close = false, done = false;
+	long closeTime;
+	float driveOut;
 
-    clearEncoders();
+	clearEncoders();
 
-    while(!done) {
-        
-        driveOut = basePID.calculate(target, getLeftEncoder());
-        
-        driveL(driveOut);
-        driveR(driveOut);
+	while(!done) {
+		
+		driveOut = basePID.calculate(target, getLeftEncoder());
+		
+		driveL(driveOut);
+		driveR(driveOut);
 
-        sleep(LOOPSPEED);
+		sleep(LOOPSPEED);
 
-        if(abs(target - getLeftEncoder()) < 100) {
-            close = true;
-            closeTime = getTime();
-        }
+		if(abs(target - getLeftEncoder()) < 100) {
+			close = true;
+			closeTime = getTime();
+		}
 
-        if(close && (getTime() - closeTime) > 250) {
-            done = true;
-            driveL(0);
-            driveR(0);
-        }
+		if(close && (getTime() - closeTime) > 250) {
+			done = true;
+			driveL(0);
+			driveR(0);
+		}
 
-    }
+	}
 
 }
 
