@@ -20,6 +20,7 @@
 
 // Should be added
 // - Timer to break out of loop if running for too long
+// - What if robot overshoots over 100 ticks? Change timer algorithm
 
 #define MAXSTEP 10  // Max change per iteration
 #define LOOPTIME 20   // 20 ms, 50 Hz
@@ -68,14 +69,18 @@ void autoDrive(int target) {
 
 	while(!done) {
 		
+		// Calculate motor output
 		driveOut = basePID.calculate(target, getLeftEncoder());
 		
+		// Set motors to output
 		driveL(driveOut);
 		driveR(driveOut);
 
+		// Sleep for set time
 		sleep(LOOPSPEED);
 
-		if(abs(target - getLeftEncoder()) < 100) {
+		// Loop ends .25 seconds after gets within 100 ticks
+		if(()abs(target - getLeftEncoder()) && !close) < 100) {
 			close = true;
 			closeTime = getTime();
 		}
@@ -92,6 +97,44 @@ void autoDrive(int target) {
 
 // Using both encoders to drive straight
 void autoDrive2(int target) {
+
+	bool close = false, done = false;
+	long closeTime;
+	float driveOut, driftOut;
+
+	clearEncoders();
+
+	while(!done) {
+		
+		// Calculate motor output
+		driveOut = basePID.calculate(target, getLeftEncoder());
+		driftOut = basePID.calculate(target, getLeftEncoder() - getRightEncoder());
+
+		// Limit driveOut from -100 to 100
+		if(abs(driveOut) > 100) {
+			driveOut = sgn(driveOut) * 100;
+		}
+
+		// Set motors to output
+		driveL(driveOut - driftOut);
+		driveR(driveOut + driftOut);
+
+		// Sleep for set time
+		sleep(LOOPSPEED);
+
+		// Loop ends .25 seconds after average gets within 100 ticks
+		if((abs(2*target - (getLeftEncoder() + getRightEncoder())) < 2*100) && !close) {
+			close = true;
+			closeTime = getTime();
+		}
+
+		if(close && (getTime() - closeTime) > 250) {
+			done = true;
+			driveL(0);
+			driveR(0);
+		}
+
+	}
 
 }
 
