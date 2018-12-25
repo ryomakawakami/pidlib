@@ -90,9 +90,7 @@ void autoDrive(int target) {
 			driveL(0);
 			driveR(0);
 		}
-
 	}
-
 }
 
 // Using both encoders to drive straight
@@ -107,7 +105,7 @@ void autoDrive2(int target) {
 	while(!done) {
 		
 		// Calculate motor output
-		driveOut = basePID.calculate(target, getLeftEncoder());
+		driveOut = basePID.calculate(target, (getLeftEncoder()+getRightEncoder())/2);
 		driftOut = basePID.calculate(target, getLeftEncoder() - getRightEncoder());
 
 		// Limit driveOut from -100 to 100
@@ -133,14 +131,76 @@ void autoDrive2(int target) {
 			driveL(0);
 			driveR(0);
 		}
-
 	}
-
 }
 
 // Using both encoders and slew rate control
 void autoDrive3(int target) {
 
+	bool close = false, done = false;
+	long closeTime;
+	float driveOut, driftOut;
+	float outL, outR, lastOutL, lastOutR;
+
+	clearEncoders();
+
+	while(!done) {
+		
+		// Calculate motor output
+		driveOut = basePID.calculate(target, (getLeftEncoder()+getRightEncoder())/2);
+		driftOut = basePID.calculate(target, getLeftEncoder() - getRightEncoder());
+
+		// Limit driveOut from -100 to 100
+		if(abs(driveOut) > 100) {
+			driveOut = sgn(driveOut) * 100;
+		}
+
+		// Calculate motor output
+		outL = driveOut - driftOut;
+		outR = driveOut + driftOut;
+
+		// Slew rate limit
+		if(abs(outL - lastOutL) > MAXSTEP) {
+			if(outL - lastOutL > 0) {
+				outL = lastOutL + 10;
+			}
+			else {
+				outL = lastOutL - 10;
+			}
+		}
+
+		if(abs(outR - lastOutR) > MAXSTEP) {
+			if(outR - lastOutR > 0) {
+				outR = lastOutR + 10;
+			}
+			else {
+				outR = lastOutR - 10;
+			}
+		}
+
+		// Set motors to output
+		driveL(outL);
+		driveR(outR);
+
+		// Store output for next time
+		lastOutL = outL;
+		lastOutR = outR;
+
+		// Sleep for set time
+		sleep(LOOPSPEED);
+
+		// Loop ends .25 seconds after average gets within 100 ticks
+		if((abs(2*target - (getLeftEncoder() + getRightEncoder())) < 2*100) && !close) {
+			close = true;
+			closeTime = getTime();
+		}
+
+		if(close && (getTime() - closeTime) > 250) {
+			done = true;
+			driveL(0);
+			driveR(0);
+		}
+	}
 }
 
 void pre_auton() {
