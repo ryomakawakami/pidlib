@@ -6,6 +6,8 @@
 // - Normal looping until within 100 ticks of position
 // - Stop .25 seconds after getting to this position
 
+// Timer algorithm based on jmmckinney's PID library
+
 // Drift correction (autoDrive2)
 // - Maintain same encoder values for left and right
 // - Second PID loop in addition to position PID
@@ -20,7 +22,6 @@
 
 // Should be added
 // - Timer to break out of loop if running for too long
-// - What if robot overshoots over 100 ticks? Change timer algorithm
 
 #define MAXSTEP 10  // Max change per iteration
 #define LOOPTIME 20   // 20 ms, 50 Hz
@@ -61,7 +62,7 @@ void clearEncoders() {
 // Using only left encoder
 void autoDrive(int target) {
 
-	bool close = false, done = false;
+	bool done = false;
 	long closeTime;
 	float driveOut;
 
@@ -79,24 +80,27 @@ void autoDrive(int target) {
 		// Sleep for set time
 		sleep(LOOPSPEED);
 
-		// Loop ends .25 seconds after gets within 100 ticks
-		if(()abs(target - getLeftEncoder()) && !close) < 100) {
-			close = true;
+		// Loop ends .25 seconds after left encoder gets within 100 ticks
+		if(abs(target - getLeftEncoder()) > 100) {
 			closeTime = getTime();
 		}
 
-		if(close && (getTime() - closeTime) > 250) {
+		if((getTime() - closeTime) > 250) {
 			done = true;
-			driveL(0);
-			driveR(0);
 		}
+
 	}
+
+	// Stop motors
+	driveL(0);
+	driveR(0);
+
 }
 
 // Using both encoders to drive straight
 void autoDrive2(int target) {
 
-	bool close = false, done = false;
+	bool done = false;
 	long closeTime;
 	float driveOut, driftOut;
 
@@ -121,23 +125,26 @@ void autoDrive2(int target) {
 		sleep(LOOPSPEED);
 
 		// Loop ends .25 seconds after average gets within 100 ticks
-		if((abs(2*target - (getLeftEncoder() + getRightEncoder())) < 2*100) && !close) {
-			close = true;
+		if(abs(target - (getLeftEncoder()+getRightEncoder())/2) > 100) {
 			closeTime = getTime();
 		}
 
-		if(close && (getTime() - closeTime) > 250) {
+		if((getTime() - closeTime) > 250) {
 			done = true;
-			driveL(0);
-			driveR(0);
 		}
+
 	}
+
+	// Stop motors
+	driveL(0);
+	driveR(0);
+
 }
 
 // Using both encoders and slew rate control
 void autoDrive3(int target) {
 
-	bool close = false, done = false;
+	bool done = false;
 	long closeTime;
 	float driveOut, driftOut;
 	float outL, outR, lastOutL, lastOutR;
@@ -160,29 +167,25 @@ void autoDrive3(int target) {
 		outR = driveOut + driftOut;
 
 		// Slew rate limit
-		if(abs(outL - lastOutL) > MAXSTEP) {
-			if(outL - lastOutL > 0) {
-				outL = lastOutL + 10;
-			}
-			else {
-				outL = lastOutL - 10;
-			}
+		if(outL - lastOutL > MAXSTEP) {
+			outL = lastOutL + 10;
+		}
+		else if(outL - lastOutL < -MAXSTEP) {
+			outL = lastOutL - 10;
 		}
 
-		if(abs(outR - lastOutR) > MAXSTEP) {
-			if(outR - lastOutR > 0) {
-				outR = lastOutR + 10;
-			}
-			else {
-				outR = lastOutR - 10;
-			}
+		if(outR - lastOutR > MAXSTEP) {
+			outR = lastOutR + 10;
+		}
+		else if(outR - lastOutR < -MAXSTEP) {
+			outR = lastOutR - 10;
 		}
 
 		// Set motors to output
 		driveL(outL);
 		driveR(outR);
 
-		// Store output for next time
+		// Store output for slew rate
 		lastOutL = outL;
 		lastOutR = outR;
 
@@ -190,17 +193,19 @@ void autoDrive3(int target) {
 		sleep(LOOPSPEED);
 
 		// Loop ends .25 seconds after average gets within 100 ticks
-		if((abs(2*target - (getLeftEncoder() + getRightEncoder())) < 2*100) && !close) {
-			close = true;
+		if(abs(target - (getLeftEncoder()+getRightEncoder())/2) > 100) {
 			closeTime = getTime();
 		}
 
-		if(close && (getTime() - closeTime) > 250) {
+		if((getTime() - closeTime) > 250) {
 			done = true;
-			driveL(0);
-			driveR(0);
 		}
 	}
+
+	// Stop motors
+	driveL(0);
+	driveR(0);
+	
 }
 
 void pre_auton() {
