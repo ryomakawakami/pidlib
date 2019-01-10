@@ -6,93 +6,74 @@ long getTime() {
     return(nPgmTime);
 }
 
-// PID class
+// PID struct
 // lastTime stores time of previous calculation
 // kP, kI, kD, kF are constants for PID
 // lastError stores the last value of the error
 // sigma stores the total error
-class PID {
-    public:
-        PID PID(float p, float i, float d, float f);
-        void setConstants(float p, float i, float d, float f);
-        float calculate(float target, float sensorValue, float range = 10000);
-    private:
-        long lastTime;
-        float kP, kI, kD, kF;
-        float lastError;
-        float sigma;
-};
-
-// PID object constructor
-// lastTime set to current time
-// kP, kI, kD, kF set to inputted values
-// lastError, sigma set to 0
-PID::PID(float p, float i, float d, float f) {
-    lastTime = getTime();
-    kP = p;
-    kI = i;
-    kD = d;
-    kF = f;
-    lastError = 0;
-    sigma = 0;
-}
+typedef struct {
+    long lastTime;
+    float kP, kI, kD, kF;
+    float lastError;
+    float sigma;
+} PID;
 
 // PID function setConstants
 // Allows user to input kP, kI, kD and initializes other variables
 // lastTime set to current time
 // kP, kI, kD, kF set to inputted values
 // lastError, sigma set to 0
-void PID::setConstants(float p, float i, float d, float f) {
+void setConstantsPID(PID* pid, float p, float i, float d, float f) {
     lastTime = getTime();
-    kP = p;
-    kI = i;
-    kD = d;
-    kF = f;
-    lastError = 0;
-    sigma = 0;
+    pid->kP = p;
+    pid->kI = i;
+    pid->kD = d;
+    pid->kF = f;
+    pid->lastError = 0;
+    pid->sigma = 0;
 }
 
 // PID function calculate
 // Calculates control loop output
 // Integral range default is a large value
-float PID::calculate(float target, float sensorValue, float range = 10000) {
+float calculatePID(PID* pid, float target, float sensorValue, float range = 10000) {
     // Declare variables
     float deltaTime, error, derivative, output;
 
     // Find change in time and store current
-    deltaTime = (float)(getTime() - lastTime) / 1000.0;
-    lastTime = getTime();
+    deltaTime = (float)(getTime() - pid->lastTime) / 1000.0;
+    pid->lastTime = getTime();
 
     // Calculate error (P)
     error = target - sensorValue;
 
     // Calculate sigma (I)
-    sigma += error * deltaTime;
+    pid->sigma += error * deltaTime;
 
     // Reset sigma if outside of integral range
     if(abs(error) > range) {
-        sigma = 0;
+        pid->sigma = 0;
     }
 
     // Also reset if robot shoots over
     else if(target > 0) {
         if(error < 0) {
-            sigma = 0;
+            pid->sigma = 0;
         }
     }
     else {
         if(error > 0) {
-            sigma = 0;
+            pid->sigma = 0;
         }
     }
 
     // Calculate derivative (D)
     // Change in value over change in time and store current
-    derivative = (error - lastError) / deltaTime;
-    lastError = error;
+    derivative = (error - pid->lastError) / deltaTime;
+    pid->lastError = error;
 
     // Calculate output
-    output = kP * error + kI * sigma + kD * derivative + kF * target;
+    output = pid->kP * error + pid->kI * sigma + pid->kD * derivative + pid->kF * target;
 
     return output;
 }

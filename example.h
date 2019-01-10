@@ -31,7 +31,7 @@
 // PID objects with somewhat reasonable constants
 // Only P is used
 // Not sure if constructors work in this scope
-PID basePID(0.5, 0, 0, 0), driftPID(1, 0, 0, 0);
+PID basePID, driftPID;
 
 // Sets left base motors
 void driveL(int power) {
@@ -71,7 +71,7 @@ void autoDrive(int target) {
 	while(!done) {
 		
 		// Calculate motor output
-		driveOut = basePID.calculate(target, getLeftEncoder());
+		driveOut = calculatePID(&basePID, target, getLeftEncoder());
 		
 		// Set motors to output
 		driveL(driveOut);
@@ -109,8 +109,8 @@ void autoDrive2(int target) {
 	while(!done) {
 		
 		// Calculate motor output
-		driveOut = basePID.calculate(target, (getLeftEncoder()+getRightEncoder())/2);
-		driftOut = basePID.calculate(target, getLeftEncoder() - getRightEncoder());
+		driveOut = calculatePID(&basePID, target, (getLeftEncoder()+getRightEncoder())/2);
+		driftOut = calculatePID(&driftPID, target, getLeftEncoder() - getRightEncoder());
 
 		// Limit driveOut from -100 to 100
 		if(abs(driveOut) > 100) {
@@ -154,8 +154,8 @@ void autoDrive3(int target) {
 	while(!done) {
 		
 		// Calculate motor output
-		driveOut = basePID.calculate(target, (getLeftEncoder()+getRightEncoder())/2);
-		driftOut = basePID.calculate(target, getLeftEncoder() - getRightEncoder());
+		driveOut = calculatePID(&basePID, target, (getLeftEncoder()+getRightEncoder())/2);
+		driftOut = calculatePID(&driftPID, target, getLeftEncoder() - getRightEncoder());
 
 		// Limit driveOut from -100 to 100
 		if(abs(driveOut) > 100) {
@@ -210,4 +210,7 @@ void autoDrive3(int target) {
 
 void pre_auton() {
 
+	setConstantsPID(&basePID, 0.5, 0, 0, 0);
+	setConstantsPID(&driftPID, 1, 0, 0, 0);
+	
 }
