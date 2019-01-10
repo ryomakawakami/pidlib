@@ -110,7 +110,7 @@ void autoDrive2(int target) {
 		
 		// Calculate motor output
 		driveOut = basePID.calculate(target, (getLeftEncoder()+getRightEncoder())/2);
-		driftOut = basePID.calculate(target, getLeftEncoder() - getRightEncoder());
+		driftOut = driftPID.calculate(target, getLeftEncoder() - getRightEncoder());
 
 		// Limit driveOut from -100 to 100
 		if(abs(driveOut) > 100) {
@@ -155,7 +155,7 @@ void autoDrive3(int target) {
 		
 		// Calculate motor output
 		driveOut = basePID.calculate(target, (getLeftEncoder()+getRightEncoder())/2);
-		driftOut = basePID.calculate(target, getLeftEncoder() - getRightEncoder());
+		driftOut = driftPID.calculate(target, getLeftEncoder() - getRightEncoder());
 
 		// Limit driveOut from -100 to 100
 		if(abs(driveOut) > 100) {
