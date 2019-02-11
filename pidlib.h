@@ -9,12 +9,12 @@ long getTime() {
 // PID struct
 // lastTime stores time of previous calculation
 // kP, kI, kD, kF are constants for PID
-// lastError stores the last value of the error
+// lastValue stores the last value of the input
 // sigma stores the total error
 typedef struct {
     long lastTime;
     float kP, kI, kD, kF;
-    float lastError;
+    float lastValue;
     float sigma;
 } PID;
 
@@ -22,14 +22,14 @@ typedef struct {
 // Allows user to input kP, kI, kD and initializes other variables
 // lastTime set to current time
 // kP, kI, kD, kF set to inputted values
-// lastError, sigma set to 0
+// lastValue, sigma set to 0
 void setConstantsPID(PID* pid, float p, float i, float d, float f) {
     lastTime = getTime();
     pid->kP = p;
     pid->kI = i;
     pid->kD = d;
     pid->kF = f;
-    pid->lastError = 0;
+    pid->lastValue = 0;
     pid->sigma = 0;
 }
 
@@ -69,8 +69,8 @@ float calculatePID(PID* pid, float target, float sensorValue, float range = 1000
 
     // Calculate derivative (D)
     // Change in value over change in time and store current
-    derivative = (error - pid->lastError) / deltaTime;
-    pid->lastError = error;
+    derivative = (sensorValue - pid->lastValue) / deltaTime;
+    pid->lastValue = sensorValue;
 
     // Calculate output
     output = pid->kP * error + pid->kI * sigma + pid->kD * derivative + pid->kF * target;
